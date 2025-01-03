@@ -20,7 +20,7 @@ In directory *'components/'* you can see all components. Files main_init is need
 All custom scripts are in *'pyscripts/'*.
 
 # Fast start and testing
-To start with you should install SA:MP server (common or open.mp) and PySAMP plugin. If you have difficulties with installing, you can try to install PySAMP template (https://github.com/ackut/PySAMP-Template).
+To start with you should install SA:MP server (common or open.mp), PySAMP plugin and this core over it. If you have difficulties with installing, you can try to install PySAMP template (https://github.com/ackut/PySAMP-Template).
 
 Then connect to the server and try to test a couple of scripts. You will see and test:
 - Notifying of connections and disconnections of other players and greeting from server by your connection **(con_discon_notifies.py)**
