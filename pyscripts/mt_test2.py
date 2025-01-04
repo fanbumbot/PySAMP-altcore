@@ -1,15 +1,15 @@
 from pyaltcore import *
 from components import *
 
-@RawEvent("OnGameModeInit")
-def OnInit():
+@raw_event("OnGameModeInit")
+def on_init():
     player = Player(10000)
     for i in range(200000):
-        color, oldHealth, newHealth = player.MTSafetyTest1()
+        color, old_health, new_health = player.mt_safety_test_1()
         if color % 2 == 0:
-            if oldHealth-1 != newHealth:
+            if old_health-1 != new_health:
                 print("BRUH")
         else:
-            if oldHealth+2 != newHealth:
+            if old_health+2 != new_health:
                 print("BRUH")
     print("script mt_test2 complete")

@@ -17,97 +17,96 @@ class ContainerByName:
     def __iter__(self):
         return self.container.__iter__()
 
-    def IsContained(self, name):
+    def is_contained(self, name):
         return name in self.container
     
-    def Add(self, name, item):
+    def add(self, name, item):
         self.container[name] = item
 
-    def Remove(self, name):
-        if self.IsContained(name):
+    def remove(self, name):
+        if self.is_contained(name):
             del self.container[name]
 
-    def Get(self, name):
-        if self.IsContained(name):
+    def get(self, name):
+        if self.is_contained(name):
             return self.container[name]
         
-    def GetAll(self):
+    def get_all(self):
         return self.container.copy()
     
 class MTSafeContainerByName(ContainerByName, MTSafeClass):
     pass
 
 class GlobalClass(MTSafeContainerByName):
-    def __init__(self, typeClass: "GlobalObject"):
+    def __init__(self, type_class: "GlobalObject"):
         super().__init__()
-        self.typeClass = typeClass
+        self.type_class = type_class
 
-    def Destroy(self):
+    def destroy(self):
         for objName in self:
-            obj: "GlobalObject" = self.Get(objName)
-            obj.Destroy()
+            obj: "GlobalObject" = self.get(objName)
+            obj.destroy()
 
-    def Add(self, name, obj: "GlobalObject"):
-        super().Add(name, obj)
+    def add(self, name, obj: "GlobalObject"):
+        super().add(name, obj)
 
-    def Remove(self, name):
-        super().Remove(name)
+    def remove(self, name):
+        super().remove(name)
 
 class GlobalClassManager(MTSafeContainerByName):
-    def Add(self, name, item: "GlobalObject"):
-        if self.IsContained(name):# replacing
-            self.Remove(name)
-        super().Add(name, GlobalClass(item))
+    def add(self, name, item: "GlobalObject"):
+        if self.is_contained(name):# replacing
+            self.remove(name)
+        super().add(name, GlobalClass(item))
         GlobalObject.global_class_ref[item] = name
 
-    def Remove(self, name):
-        if self.IsContained(name):
-            globalClass: GlobalClass = self.Get(name)
-            globalClass.Destroy()
-            super().Remove(name)
+    def remove(self, name):
+        if self.is_contained(name):
+            global_class: GlobalClass = self.get(name)
+            global_class.destroy()
+            super().remove(name)
 
-    def Get(self, name) -> GlobalClass:
-        return super().Get(name)
+    def get(self, name) -> GlobalClass:
+        return super().get(name)
 
-globalManager = GlobalClassManager()
+global_manager = GlobalClassManager()
 
 class GlobalObject(IID, MTSafeClass):
     global_class_ref: dict[type, str] = dict()
 
     def __new__(cls, id):
-        globalClass = cls.GetGlobalClass()
-        if globalClass.IsContained(id):
-            return globalClass.Get(id)
+        global_class = cls.get_global_class()
+        if global_class.is_contained(id):
+            return global_class.get(id)
         return super().__new__(cls)
 
     def __init__(self, id):
         IID.__init__(self, id)
-        globalClass = self.__class__.GetGlobalClass()
-        if globalClass != None:
-            globalClass.Add(id, self)
+        global_class = self.__class__.get_global_class()
+        if global_class != None:
+            global_class.add(id, self)
 
-    def Destroy(self):
-        globalClass = self.__class__.GetGlobalClass()
-        globalClass.Remove(self.ID)
+    def destroy(self):
+        global_class = self.__class__.get_global_class()
+        global_class.remove(self.ID)
 
     @classmethod
-    def Get(cls, id):
-        globalClass = cls.GetGlobalClass()
-        if globalClass == None or (not globalClass.IsContained(id)):
+    def get(cls, id):
+        global_class = cls.get_global_class()
+        if global_class == None or (not global_class.is_contained(id)):
             return None
-        return globalClass.Get(id)
+        return global_class.get(id)
     
     @classmethod
-    def GetAll(cls):
-        globalClass = cls.GetGlobalClass()
-        if globalClass != None:
-            return globalClass.GetAll()
+    def get_all(cls):
+        global_class = cls.get_global_class()
+        if global_class != None:
+            return global_class.get_all()
 
     @classmethod
-    def GetGlobalClass(cls) -> GlobalClass:
+    def get_global_class(cls) -> GlobalClass:
         if cls in GlobalObject.global_class_ref:
             name = GlobalObject.global_class_ref[cls]
-            if globalManager.IsContained(name):
-                globalClass = globalManager.Get(name)
-                return globalClass
+            if global_manager.is_contained(name):
+                return global_manager.get(name)
         return None

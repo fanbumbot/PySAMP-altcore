@@ -1,10 +1,10 @@
 from .players import *
 
-@RawEventBefore("OnPlayerConnect")
-def OnConnect(playerid):
+@raw_event_before("OnPlayerConnect")
+def on_connect(playerid):
     Player(playerid)
 
-@RawEventAfter("OnPlayerDisconnect")
-def OnDisconnect(playerid, reason):
-    player: Player = Player.Get(playerid)
-    player.Destroy()
+@raw_event_after("OnPlayerDisconnect")
+def on_disconnect(playerid, reason):
+    player: Player = Player.get(playerid)
+    player.destroy()

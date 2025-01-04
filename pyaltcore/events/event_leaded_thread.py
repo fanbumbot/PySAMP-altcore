@@ -18,7 +18,7 @@ class FunctionTransferPacket(TransferPacket):
 @dataclass
 class CodeTransferPacket(TransferPacket):
     code: str
-    globalScope: dict
+    global_scope: dict
 
 class EventLeadedThread(threading.Thread):
     def __init__(self, group = None, target = None, name = None, args = ..., kwargs = None, *, daemon = None):
@@ -27,54 +27,55 @@ class EventLeadedThread(threading.Thread):
         self.pause = False
         self.destroyed = False
         self.result = None
-        self.readyEvent = threading.Event()
-        self.allLock = threading.Lock()
+        self.ready_event = threading.Event()
+        self.all_lock = threading.Lock()
 
-    def PutFunc(self, event: threading.Event, func, args, kwargs):
-        with self.allLock:
+    def put_func(self, event: threading.Event, func, args, kwargs):
+        with self.all_lock:
             self.queue.put(FunctionTransferPacket(event, func, args, kwargs))
             if (not self.pause) and (not self.destroyed):
-                self.readyEvent.set()
+                self.ready_event.set()
 
-    def PutCode(self, code: str, globalScope: dict):
-        with self.allLock:
-            self.queue.put(CodeTransferPacket(code, globalScope))
+    def put_code(self, code: str, global_scope: dict):
+        with self.all_lock:
+            self.queue.put(CodeTransferPacket(code, global_scope))
             if (not self.pause) and (not self.destroyed):
-                self.readyEvent.set()
+                self.ready_event.set()
 
-    def GetResult(self):
-        with self.allLock:
+    def get_result(self):
+        with self.all_lock:
             return self.result
 
     def run(self):
         while not self.destroyed:
-            self.readyEvent.wait()
+            self.ready_event.wait()
             if self.queue.empty() or self.destroyed:
                 continue
 
-            transferPacket: TransferPacket = self.queue.get()
-            if isinstance(transferPacket, FunctionTransferPacket):
-                self.result = transferPacket.func(*transferPacket.args, **transferPacket.kwargs)
-                if transferPacket.event != None:
-                    transferPacket.event.set()
-            elif isinstance(transferPacket, CodeTransferPacket):
-                exec(transferPacket.code, transferPacket.globalScope)
+            transfer_packet: TransferPacket = self.queue.get()
+            if isinstance(transfer_packet, FunctionTransferPacket):
+                self.result = transfer_packet.func(*transfer_packet.args, **transfer_packet.kwargs)
+                if transfer_packet.event != None:
+                    transfer_packet.event.set()
+            elif isinstance(transfer_packet, CodeTransferPacket):
+                exec(transfer_packet.code, transfer_packet.global_scope)
 
             if self.queue.empty():
-                self.readyEvent.clear()
+                self.ready_event.clear()
 
-    def Stop(self):
-        with self.allLock:
+    def stop(self):
+        with self.all_lock:
             self.pause = True
-            self.readyEvent.clear()
+            self.ready_event.clear()
 
-    def Start(self):
-        with self.allLock:
+    def start(self):
+        with self.all_lock:
             self.pause = False
             if not self.queue.empty():
-                self.readyEvent.set()
+                self.ready_event.set()
+        super().start()
 
-    def Destroy(self):
-        with self.allLock:
+    def destroy(self):
+        with self.all_lock:
             self.destroyed = True
-            self.readyEvent.set()
+            self.ready_event.set()

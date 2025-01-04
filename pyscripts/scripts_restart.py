@@ -1,8 +1,8 @@
 from pyaltcore import *
 from components import *
 
-@RawEvent("OnPlayerCommandText", True)
-def OnCmd(playerid, text: str):
+@raw_event("OnPlayerCommandText", True)
+def on_cmd(playerid, text: str):
     params = text.split()
     if len(params) < 2 or len(params) > 2:
         return
@@ -12,15 +12,15 @@ def OnCmd(playerid, text: str):
     name = params[1]
 
     try:
-        if globalScriptManager.IsConnected(name):
-            globalScriptManager.Reconnect(name)
+        if global_script_manager.is_connected(name):
+            global_script_manager.reconnect(name)
         else:
             path = 'pyscripts/'+name+'.py'
-            script = globalScriptManager.ConnectByFile(path, {"globalManager": globalManager,
-                                            "globalEventManager": globalEventManager,
-                                            "globalScriptManager": globalScriptManager})
-            script.Run()
+            script = global_script_manager.connect_by_file(path, {"global_manager": global_manager,
+                                            "global_event_manager": global_event_manager,
+                                            "global_script_manager": global_script_manager})
+            script.run()
     except:
-        Player(playerid).SendMessage("Script could not load (((")
+        Player(playerid).send_message("Script could not load (((")
 
     return True

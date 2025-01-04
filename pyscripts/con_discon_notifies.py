@@ -1,27 +1,27 @@
 from pyaltcore import *
 from components import *
 
-@RawEvent("OnGameModeInit")
-def OnInit():
+@raw_event("OnGameModeInit")
+def on_init():
     print("Connect-disconnect notifies script is connected!")
 
-@RawEvent("OnPlayerConnect")
-def OnConnect(playerid):
-    player: Player = globalManager.Get("Player").Get(playerid)
-    player.SendMessage(f"Hi, {player.Name}")
+@raw_event("OnPlayerConnect")
+def on_connect(playerid):
+    player: Player = global_manager.get("Player").get(playerid)
+    player.send_message(f"Hi, {player.Name}")
 
-    players = Player.GetAllPlayers()
+    players = Player.get_all_players()
     for each_player in players:
         each_player: Player
         if each_player != player:
-            each_player.SendMessage(f"Player {player.Name} connected")
+            each_player.send_message(f"Player {player.Name} connected")
 
-@RawEvent("OnPlayerDisconnect")
-def OnDisconnect(playerid, reason):
-    player: Player = globalManager.Get("Player").Get(playerid)
+@raw_event("OnPlayerDisconnect")
+def on_disconnect(playerid, reason):
+    player: Player = global_manager.get("Player").get(playerid)
 
-    players = Player.GetAllPlayers()
+    players = Player.get_all_players()
     for each_player in players:
         each_player: Player
         if each_player != player:
-            each_player.SendMessage(f"Player {player.Name} disconnected")
+            each_player.send_message(f"Player {player.Name} disconnected")

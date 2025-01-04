@@ -1,8 +1,8 @@
 from pyaltcore import *
 from components import *
 
-all = Player.GetAllPlayers()
+all = Player.get_all_players()
 
 for player in all:
     player: Player
-    player.SendMessage("Hello, world")
+    player.send_message("Hello, world")

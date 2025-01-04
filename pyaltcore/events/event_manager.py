@@ -12,25 +12,27 @@ class EventManager:
         self.__all_handlers: dict[str, list[tuple[Callable, EventLeadedThread, bool, Any]]] = dict()
         self.__all_handlers_before: dict[str, list[tuple[Callable, EventLeadedThread, bool, Any]]] = dict()
         self.__all_handlers_after: dict[str, list[tuple[Callable, EventLeadedThread, bool, Any]]] = dict()
-        self.resultWaitEvent: threading.Event = threading.Event()
+        self.result_wait_event: threading.Event = threading.Event()
 
-        self.unsubscribeLock = threading.Lock()
+        self.unsubscribe_lock = threading.Lock()
 
-    def RegisterPredefinedEvent(self, name: str, defaultValue: int = 1):
-        self.__make_mark(name, lambda *args, **kwargs: self.Handler(name, defaultValue, args, kwargs))
+    def register_predefined_event(self, name: str, default_value: int = 1):
+        self.__make_mark(name, lambda *args, **kwargs: self.handler(name, default_value, args, kwargs))
         if not (name in self.__all_handlers):
             self.__all_handlers[name] = list()
             self.__all_handlers_before[name] = list()
             self.__all_handlers_after[name] = list()
 
-    def RegisterNewEvent(self, name: str, parameter_types: str, defaultValue: int = 1):
+    def register_new_event(self, name: str, parameter_types: str, default_value: int = 1):
         RegisterCallback(name, parameter_types)
-        self.RegisterPredefinedEvent(name, defaultValue)
+        self.register_predefined_event(name, default_value)
 
-    def UnregisterEvent(self, name: str):
+    def unregister_event(self, name: str):
         if not (name in self.__all_handlers):
             return
         del self.__all_handlers[name]
+        del self.__all_handlers_before[name]
+        del self.__all_handlers_after[name]
         self.__class__.__remove_mark(name)
 
     @staticmethod
@@ -49,36 +51,36 @@ class EventManager:
         import python
         delattr(python, name)
 
-    def Subscribe(self, name: str, func: Callable,
-                  thread: EventLeadedThread, waitResult: bool,
-                  resultWithoutWaiting = None,
-                  isBefore:bool = False, isAfter: bool = False):
+    def subscribe(self, name: str, func: Callable,
+                  thread: EventLeadedThread, wait_result: bool,
+                  result_without_waiting = None,
+                  is_before:bool = False, is_after: bool = False):
         if (not (name in self.__all_handlers) or
             not (name in self.__all_handlers_before) or
             not (name in self.__all_handlers_after)):
             raise EventSubscribeException(f"Event with the name '{name}' is not exists")
-        if isBefore:
-            self.__all_handlers_before[name].append((func, thread, waitResult, resultWithoutWaiting))
-        elif isAfter:
-            self.__all_handlers_after[name].append((func, thread, waitResult, resultWithoutWaiting))
+        if is_before:
+            self.__all_handlers_before[name].append((func, thread, wait_result, result_without_waiting))
+        elif is_after:
+            self.__all_handlers_after[name].append((func, thread, wait_result, result_without_waiting))
         else:
-            self.__all_handlers[name].append((func, thread, waitResult, resultWithoutWaiting))
+            self.__all_handlers[name].append((func, thread, wait_result, result_without_waiting))
 
-    def Unsubscribe(self, name: str, func: Callable, thread: EventLeadedThread):
-        with self.unsubscribeLock:
+    def unsubscribe(self, name: str, func: Callable, thread: EventLeadedThread):
+        with self.unsubscribe_lock:
             if not (name in self.__all_handlers):
                 return
             try:
                 for i in range(len(self.__all_handlers[name])):
-                    iterFunc, iterThread, _, _ = self.__all_handlers[name]
-                    if iterFunc == func and iterThread == thread:
+                    iter_func, iter_thread, _, _ = self.__all_handlers[name]
+                    if iter_func == func and iter_thread == thread:
                         del self.__all_handlers[name][i]
                         break
             except:
                 raise EventSubscribeException(f"Function '{func.__name__}' is not subscribed on event '{name}'")
 
-    def ClearSubscribesByName(self, name: str):
-        with self.unsubscribeLock:
+    def clear_subscribes_by_name(self, name: str):
+        with self.unsubscribe_lock:
             if name in self.__all_handlers:
                 self.__all_handlers[name].clear()
             if name in self.__all_handlers_before:
@@ -86,49 +88,50 @@ class EventManager:
             if name in self.__all_handlers_after:
                 self.__all_handlers_after[name].clear()
 
-    def ClearSubscribesByThread(self, thread: EventLeadedThread):
-        def ClearInLoop(container):
-            for nameEvent in container:
+    def clear_subscribes_by_thread(self, thread: EventLeadedThread):
+        def clear_in_loop(container):
+            for name_event in container:
                 i = 0
-                while i < len(container[nameEvent]):
-                    _, iterThread, _, _ = container[nameEvent][i]
-                    if iterThread == thread:
-                        del container[nameEvent][i]
+                while i < len(container[name_event]):
+                    _, iter_thread, _, _ = container[name_event][i]
+                    if iter_thread == thread:
+                        del container[name_event][i]
                     else:
                         i += 1
-        ClearInLoop(self.__all_handlers)
-        ClearInLoop(self.__all_handlers_before)
-        ClearInLoop(self.__all_handlers_after)
 
-    def Handler(self, name: str, defaultValue: int, args, kwargs):
-        def Loop(iterator, forceWait = True):
-            for func, thread, waitResult, resultWithoutWaiting in iterator:
+        clear_in_loop(self.__all_handlers)
+        clear_in_loop(self.__all_handlers_before)
+        clear_in_loop(self.__all_handlers_after)
+
+    def handler(self, name: str, default_value: int, args, kwargs):
+        def loop(iterator, force_wait = True):
+            for func, thread, wait_result, result_without_waiting in iterator:
                 if isinstance(thread, EventLeadedThread):
-                    if waitResult or forceWait:
-                        self.resultWaitEvent.clear()
-                        thread.PutFunc(self.resultWaitEvent, func, args, kwargs)
-                        self.resultWaitEvent.wait()
-                        answer = thread.GetResult()
+                    if wait_result or force_wait:
+                        self.result_wait_event.clear()
+                        thread.put_func(self.result_wait_event, func, args, kwargs)
+                        self.result_wait_event.wait()
+                        answer = thread.get_result()
                     else:
-                        thread.PutFunc(None, func, args, kwargs)
-                        answer = resultWithoutWaiting
+                        thread.put_func(None, func, args, kwargs)
+                        answer = result_without_waiting
                 else:
                     answer = func(*args, **kwargs)
-                if (answer != None) and (answer != defaultValue):
+                if (answer != None) and (answer != default_value):
                     return answer
-            return defaultValue
+            return default_value
                 
         if name in self.__all_handlers_before:
-            Loop(self.__all_handlers_before[name], True)
+            loop(self.__all_handlers_before[name], True)
 
         if not (name in self.__all_handlers):
-            answer = defaultValue
+            answer = default_value
         else:
-            answer = Loop(self.__all_handlers[name])
+            answer = loop(self.__all_handlers[name])
 
         if name in self.__all_handlers_after:
-            Loop(self.__all_handlers_after[name])
+            loop(self.__all_handlers_after[name])
 
         return answer
 
-globalEventManager = EventManager()
+global_event_manager = EventManager()

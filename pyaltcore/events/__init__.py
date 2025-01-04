@@ -3,7 +3,7 @@ from .event_manager import *
 
 import threading
 
-predefinedCallbacks = set((
+predefined_callbacks = set((
     'OnGameModeInit',
     'OnGameModeExit',
     'OnActorStreamIn',
@@ -63,39 +63,39 @@ predefinedCallbacks = set((
     'OnVehicleStreamOut',
 ))
 
-def RawEvent(name: str, waitResult: bool = False, resultWithoutWaiting = None):
+def raw_event(name: str, wait_result: bool = False, result_without_waiting = None):
     def my_decorator(func):
         def wrapper(*args, **kwargs):
             return func(*args, **kwargs)
         currentThread = threading.current_thread()
-        globalEventManager.Subscribe(name, func, currentThread, waitResult,
-                                     resultWithoutWaiting)
+        global_event_manager.subscribe(name, func, currentThread, wait_result,
+                                     result_without_waiting)
         return wrapper
     return my_decorator
 
-def RawEventBefore(name: str, waitResult: bool = False, resultWithoutWaiting = None):
+def raw_event_before(name: str, wait_result: bool = False, result_without_waiting = None):
     def my_decorator(func):
         def wrapper(*args, **kwargs):
             return func(*args, **kwargs)
-        currentThread = threading.current_thread()
-        globalEventManager.Subscribe(name, func, currentThread, waitResult,
-                                     resultWithoutWaiting, True)
+        current_thread = threading.current_thread()
+        global_event_manager.subscribe(name, func, current_thread, wait_result,
+                                     result_without_waiting, True)
         return wrapper
     return my_decorator
 
-def RawEventAfter(name: str, waitResult: bool = False, resultWithoutWaiting = None):
+def raw_event_after(name: str, wait_result: bool = False, result_without_waiting = None):
     def my_decorator(func):
         def wrapper(*args, **kwargs):
             return func(*args, **kwargs)
-        currentThread = threading.current_thread()
-        globalEventManager.Subscribe(name, func, currentThread, waitResult,
-                                     resultWithoutWaiting, isAfter=True)
+        current_thread = threading.current_thread()
+        global_event_manager.subscribe(name, func, current_thread, wait_result,
+                                     result_without_waiting, is_after=True)
         return wrapper
     return my_decorator
 
-for name in predefinedCallbacks:
-    defaultValue = 1
+for name in predefined_callbacks:
+    default_value = 1
     match name:
         case "OnDialogResponse" | "OnPlayerCommandText":
-            defaultValue = 0
-    globalEventManager.RegisterPredefinedEvent(name, defaultValue)
+            default_value = 0
+    global_event_manager.register_predefined_event(name, default_value)
